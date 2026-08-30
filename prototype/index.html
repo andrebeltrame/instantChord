@@ -677,7 +677,7 @@ const NAMES_F = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
 /* Sustenido ou bemol depende da armadura, não da tônica sozinha: sol menor
    se escreve com bemóis (Gm F Eb Bb) e sol maior com sustenidos. A conta é
    feita no relativo maior de cada modo. */
-const REL_MAJOR = { major:0, dorian:10, phrygian:8, mixolydian:5, minor:3, harmonicMinor:3 };
+const REL_MAJOR = { major:0, minor:3 };
 const FLAT_MAJORS = new Set([5,10,3,8,1,6]);      // F Bb Eb Ab Db Gb
 
 function useFlats(root, scale){
@@ -685,12 +685,8 @@ function useFlats(root, scale){
 }
 
 const SCALES = {
-  major:         { label:"Maior",           steps:[0,2,4,5,7,9,11] },
-  minor:         { label:"Menor",           steps:[0,2,3,5,7,8,10] },
-  dorian:        { label:"Dórico",          steps:[0,2,3,5,7,9,10] },
-  mixolydian:    { label:"Mixolídio",       steps:[0,2,4,5,7,9,10] },
-  harmonicMinor: { label:"Menor harmônico", steps:[0,2,3,5,7,8,11] },
-  phrygian:      { label:"Frígio",          steps:[0,1,3,5,7,8,10] },
+  major: { label:"Maior", steps:[0,2,4,5,7,9,11] },
+  minor: { label:"Menor", steps:[0,2,3,5,7,8,10] },
 };
 
 /* Função harmônica por grau — depende do modo, não é tabela fixa.
@@ -952,7 +948,7 @@ function detectKey(chords){
   for (let r = 0; r < 12; r++){
     for (const sc of Object.keys(SCALES)){
       const pcs = new Set(SCALES[sc].steps.map(x => (r + x) % 12));
-      let score = (sc === "major" || sc === "minor") ? .4 : 0;
+      let score = 0;
       chords.forEach((c, i) => {
         const notes = c.ivs.map(iv => (c.rootPc + iv) % 12);
         score += notes.filter(n => pcs.has(n)).length / notes.length * 2;
@@ -1211,18 +1207,19 @@ function mkEvent(si, ch, pitch, start, dur, vel, off, st, rnd, isBass){
    6. ESTADO
    ═══════════════════════════════════════════════════════════ */
 
+/* Nomeadas pelos acordes que produzem, não pelos graus. Quatro compassos. */
 const PRESETS = {
-  "fm-classic": { label:"i VII VI III  (o seu exemplo)", root:5, scale:"minor",  degs:[1,7,6,3] },
-  "pop":        { label:"vi IV I V",                     root:0, scale:"major",  degs:[6,4,1,5] },
-  "axis":       { label:"I V vi IV",                     root:0, scale:"major",  degs:[1,5,6,4] },
-  "jazz":       { label:"ii V I VI",                     root:0, scale:"major",  degs:[2,5,1,6], exts:[7,7,7,7] },
-  "andalusian": { label:"i VII VI V",                    root:9, scale:"minor",  degs:[1,7,6,5] },
-  "dorian":     { label:"i IV i VII  (dórico)",          root:2, scale:"dorian", degs:[1,4,1,7] },
-  "epic":       { label:"i VI III VII",                  root:4, scale:"minor",  degs:[1,6,3,7] },
+  "fm-classic": { label:"Fm Eb Db Ab  (o seu exemplo)", root:5, scale:"minor", degs:[1,7,6,3] },
+  "pop":        { label:"Am F C G",                     root:0, scale:"major", degs:[6,4,1,5] },
+  "axis":       { label:"C G Am F",                     root:0, scale:"major", degs:[1,5,6,4] },
+  "jazz":       { label:"Dm7 G7 Cmaj7 Am7",             root:0, scale:"major", degs:[2,5,1,6], exts:[7,7,7,7] },
+  "andalusian": { label:"Am G F Em",                    root:9, scale:"minor", degs:[1,7,6,5] },
+  "sad":        { label:"Am Dm F Em",                   root:9, scale:"minor", degs:[1,4,6,5] },
+  "epic":       { label:"Em C G D",                     root:4, scale:"minor", degs:[1,6,3,7] },
 };
 
 const state = {
-  root: 5, scale: "minor", bpm: 92, count: 4,
+  root: 5, scale: "minor", bpm: 92, count: 4,      // quatro compassos por padrão
   slots: Array.from({length:8}, (_,i) => ({ mode:"deg", deg:[1,7,6,3,1,7,6,3][i], ext:5, sus:0, inv:0, len:4, on:true })),
   motion: 0, spread: 0, density: .08,
   gate: .70, hum: .12, dir: "up",
@@ -1745,7 +1742,11 @@ function buildControls(){
     seg("sus",    () => state.slots[state.sel].sus, v => { toDegree(state.sel); state.slots[state.sel].sus = +v; }),
     seg("len",    () => state.slots[state.sel].len, v => state.slots[state.sel].len = +v),
     seg("on",     () => state.slots[state.sel].on ? 1 : 0, v => state.slots[state.sel].on = v === "1"),
-    seg("degrees",() => state.slots[state.sel].deg, v => { toDegree(state.sel); state.slots[state.sel].deg = +v; }),
+    // Um acorde digitado não tem grau próprio; marca o botão do grau em que
+    // ele cai, para o usuário ver onde está antes de mexer.
+    seg("degrees",() => { const sl = state.slots[state.sel];
+                          return sl.mode === "abs" ? analyse(sl, state).deg : sl.deg; },
+                  v => { toDegree(state.sel); state.slots[state.sel].deg = +v; }),
   );
 
   const gate = $("#gate"), hum = $("#hum");

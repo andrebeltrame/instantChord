@@ -11,11 +11,12 @@ Semitons acima da tônica:
 | Escala | Passos |
 | --- | --- |
 | Maior | 0 2 4 5 7 9 11 |
-| Menor natural | 0 2 3 5 7 8 10 |
-| Dórico | 0 2 3 5 7 9 10 |
-| Mixolídio | 0 2 4 5 7 9 10 |
-| Menor harmônico | 0 2 3 5 7 8 11 |
-| Frígio | 0 1 3 5 7 8 10 |
+| Menor | 0 2 3 5 7 8 10 |
+
+Só duas, de propósito. Modos gregos são uma porta que o usuário-alvo não
+abre, e cada escala a mais é uma linha a mais na detecção de tonalidade
+disputando com as duas que importam. O que soa modal continua acessível
+por acorde: basta digitar a cifra, que entra como acorde fora do tom.
 
 A entrada por grau vai de 1 a 7 e é relativa à escala. Para entrada por
 nome de acorde, ver a seção 2.
@@ -56,7 +57,7 @@ menor; `dim7` leva sétima diminuta (9 semitons) e `m7b5` leva menor (10).
 
 ### Detecção de tonalidade
 
-Testa as 12 tônicas × 6 escalas e pontua:
+Testa as 12 tônicas × 2 escalas e pontua:
 
 | Sinal | Peso |
 | --- | --- |
@@ -65,7 +66,6 @@ Testa as 12 tônicas × 6 escalas e pontua:
 | Primeiro acorde na tônica candidata | 1.3 |
 | Último acorde na tônica candidata | 0.6 |
 | **Acorde dominante uma quinta acima da candidata** | **1.6** |
-| Escala maior ou menor natural | 0.4 |
 
 O peso da cadência V7→I é o que faz `Dm7 G7 Cmaj7` ser lido como dó maior e
 não ré dórico. Progressões genuinamente ambíguas continuam ambíguas — os
@@ -107,16 +107,18 @@ porque é isso que a escala produz.
 Determina a cor do pad e da nota. Depende do modo:
 
 ```
-V                        → dominante
-VII                      → dominante se houver sensível (7º passo = 11),
-                           caso contrário predominante (backdoor)
-II, IV                   → predominante
-VI                       → predominante em modo menor, tônica em maior
-I, III                   → tônica
+V                        → tensão
+VII                      → tensão se houver sensível (7º passo = 11, ou
+                           seja, em maior), predominante em menor (backdoor)
+II, IV                   → movimento
+VI                       → movimento em menor, repouso em maior
+I, III                   → repouso
 ```
 
 Sem a regra do sensível, o `VII` de `Fm Eb Db Ab` sairia pintado como
-dominante, o que está musicalmente errado.
+dominante, o que está musicalmente errado. A regra é escrita em função do
+7º passo da escala, e não com um `if (scale === "minor")`, para continuar
+correta se um modo voltar para a lista.
 
 ## 5. Vozes
 
@@ -245,3 +247,21 @@ mas nenhuma delas está ligada quando o device abre.
 **Tema único.** Os cinzas do Live e as cores da paleta de clip, sem
 alternador claro/escuro. O device mora dentro do Ableton; não faz sentido
 ter um tema que discorde do host.
+
+## 12. Padrões de abertura
+
+O device abre sempre no mesmo lugar, e esse lugar é o mais simples possível:
+
+| | |
+| --- | --- |
+| Compassos | **4** |
+| Escala | Menor |
+| Toque · Abertura · Ritmo | 0 · 0 · 0.08 — bloco, fechado, um acorde por compasso |
+| Gate | 0.70 |
+| Humanize | 0.12 |
+| Suavizar (condução) | ligado |
+| Baixo | ligado |
+
+Quatro compassos é o padrão em toda entrada: no estado inicial, em cada
+progressão pronta e em qualquer coisa que o usuário não tenha mudado. O
+seletor 2/4/6/8 e a linha de cifras são as únicas coisas que alteram isso.
