@@ -1942,6 +1942,10 @@ buildKnobs();
 buildPads();
 refresh();
 
+/* Gancho de teste: max/test/parity.js compara o motor ES5 do device com
+   este protótipo, nota por nota. Não é usado pela interface. */
+window.__instantchord = { state, generate, applyChart, parseProgression, detectKey };
+
 window.addEventListener("resize", () => { paintPads(); drawRoll(-1); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { paintPads(); drawRoll(-1); });
 

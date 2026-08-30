@@ -4,7 +4,10 @@
 
 Escopo fechado. Tudo abaixo já está resolvido no protótipo.
 
-- [ ] Porta da engine JS para o objeto `v8`
+- [x] Porta do motor para ES5 (`max/instantchord.js`), com paridade testada
+- [x] Gerador do `.amxd` (`max/build/`), formato do container verificado
+- [x] Escrita no clip pela Live API
+- [ ] Rodar dentro do Live e corrigir o que quebrar
 - [ ] Grade de 8 pads em `jsui`, com os gestos: clique, arraste vertical
       (inversão), shift+arraste (extensão), alt+clique (grau vizinho)
 - [ ] Três macros — Motion, Spread, Density
@@ -14,7 +17,8 @@ Escopo fechado. Tudo abaixo já está resolvido no protótipo.
 - [ ] Campo de cifras: digitar a progressão, detectar o tom, transpor
 - [ ] Preview ao vivo na cadeia MIDI da track
 - [ ] Botão **Write** → `add_new_notes` na clip selecionada
-- [ ] Persistência do estado no set (`pattrstorage`)
+- [ ] Persistência do campo de cifras no set (`pattr`) — os dials já salvam
+- [ ] Persistência do estado completo (`pattrstorage`)
 
 ## v2 — o que dá para adicionar depois
 

@@ -1,3 +1,4 @@
 .DS_Store
 .claude/
 node_modules/
+max/build/template.maxpat

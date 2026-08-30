@@ -36,6 +36,16 @@ Depois abra <http://localhost:8788/prototype/index.html>.
 - `prototype/index.html` — gerado, documento completo para abrir no browser
 - `prototype/build-standalone.sh` — regenera o `index.html`
 
+## Device Max for Live
+
+`max/InstantChord.amxd` — device de teste, funcional e ainda feio. Arraste
+para uma track MIDI, selecione um slot de clip na Session e clique
+**Escrever no clip**. Instruções e o que foi (e não foi) verificado em
+[`max/README.md`](max/README.md).
+
+O motor do device é o mesmo do protótipo, portado para ES5, e há um teste
+que compara os dois nota por nota: 8 casos, 789 notas, zero divergências.
+
 ## Documentação
 
 | Arquivo | Conteúdo |
@@ -43,7 +53,9 @@ Depois abra <http://localhost:8788/prototype/index.html>.
 | [`docs/decisao-plataforma.md`](docs/decisao-plataforma.md) | Por que Max for Live e não VST3 — e por que device na track, não MIDI Tool |
 | [`docs/engine-spec.md`](docs/engine-spec.md) | Especificação da engine: escalas, vozes, macros, formato de saída |
 | [`docs/roadmap.md`](docs/roadmap.md) | Escopo do v1 e o que fica para depois |
+| [`max/README.md`](max/README.md) | Como carregar e testar o device |
 
 ## Estado
 
-Protótipo de interface, v0.1. Nada de Max ainda.
+Protótipo de interface completo. Device Max for Live v0.1 gerado e com o
+motor testado — falta rodar dentro do Live.

@@ -1,0 +1,49 @@
+[
+  { "name": "padrao",
+    "chords": "Fm Eb Db Ab",
+    "macros": {} },
+
+  { "name": "dedilhado",
+    "chords": "Dm7 G7 Cmaj7 A7",
+    "macros": { "motion": 0.40, "spread": 0.30, "density": 0.48, "gate": 0.62, "hum": 0.28 } },
+
+  { "name": "arp-extremo",
+    "chords": "Bbm7 Eb7 Abmaj9 Db13",
+    "macros": { "motion": 0.92, "spread": 1, "density": 1, "gate": 0.9, "hum": 1, "dir": "updown" } },
+
+  { "name": "baixo-invertido-sem-conducao",
+    "chords": "Am/C F G Em7b5",
+    "macros": { "motion": 0.7, "dir": "down", "bass": false, "voiceLead": false, "density": 0.7 } },
+
+  { "name": "aleatorio",
+    "chords": "C7#9 Fadd9 Bb6/9 Csus2",
+    "macros": { "motion": 0.35, "dir": "rand", "hum": 0.5, "seed": 987654321, "density": 0.55 } },
+
+  { "name": "sus-e-alteracoes",
+    "chords": "Gsus4 F#dim7 Caug Bb6 Dm11 E7b13",
+    "macros": { "motion": 0.5, "spread": 0.55, "density": 0.9, "gate": 0.3, "hum": 0.4 } },
+
+  { "name": "graus-8-compassos",
+    "key": { "root": 5, "scale": "minor", "count": 8 },
+    "slots": [
+      { "mode":"deg", "deg":1, "ext":7, "sus":0, "inv":0, "len":4, "on":true },
+      { "mode":"deg", "deg":4, "ext":9, "sus":0, "inv":1, "len":4, "on":true },
+      { "mode":"deg", "deg":5, "ext":5, "sus":0, "inv":2, "len":2, "on":true },
+      { "mode":"deg", "deg":1, "ext":7, "sus":0, "inv":0, "len":4, "on":true },
+      { "mode":"deg", "deg":6, "ext":9, "sus":4, "inv":1, "len":4, "on":true },
+      { "mode":"deg", "deg":2, "ext":5, "sus":0, "inv":2, "len":8, "on":true },
+      { "mode":"deg", "deg":7, "ext":7, "sus":0, "inv":0, "len":4, "on":false },
+      { "mode":"deg", "deg":3, "ext":9, "sus":0, "inv":1, "len":4, "on":true }
+    ],
+    "macros": { "motion": 0.5, "spread": 0.6, "density": 0.75, "gate": 0.4, "hum": 0.66, "dir": "updown" } },
+
+  { "name": "graus-maior-bloco-seco",
+    "key": { "root": 0, "scale": "major", "count": 4 },
+    "slots": [
+      { "mode":"deg", "deg":1, "ext":5, "sus":0, "inv":0, "len":4, "on":true },
+      { "mode":"deg", "deg":5, "ext":7, "sus":0, "inv":0, "len":4, "on":true },
+      { "mode":"deg", "deg":6, "ext":5, "sus":2, "inv":0, "len":4, "on":true },
+      { "mode":"deg", "deg":4, "ext":13, "sus":0, "inv":3, "len":4, "on":true }
+    ],
+    "macros": { "gate": 1, "hum": 0 } }
+]
