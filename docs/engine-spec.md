@@ -61,15 +61,39 @@ Testa as 12 tônicas × 2 escalas e pontua:
 
 | Sinal | Peso |
 | --- | --- |
-| Notas do acorde dentro da escala | até 2 por acorde |
+| Acorde inteiro dentro da escala | 2, menos **1.5 por nota de fora** (piso −1) |
 | Fundamental do acorde na escala | 1 |
 | Primeiro acorde na tônica candidata | 1.3 |
 | Último acorde na tônica candidata | 0.6 |
 | **Acorde dominante uma quinta acima da candidata** | **1.6** |
 
-O peso da cadência V7→I é o que faz `Dm7 G7 Cmaj7` ser lido como dó maior e
-não ré dórico. Progressões genuinamente ambíguas continuam ambíguas — os
-seletores de tônica e escala mandam mais que a detecção.
+A penalidade por nota fora tem que ser **maior** que o bônus de primeiro
+acorde, senão a ordem dos acordes ganha da harmonia: com a penalidade
+proporcional que havia antes, `Db Eb Fm Ab` saía como ré♭ maior — uma
+tonalidade que nem contém o acorde Eb.
+
+O peso da cadência V7→I é o que faz `Dm7 G7 Cmaj7` ser lido como dó maior.
+Progressões genuinamente ambíguas continuam ambíguas — os seletores de
+tônica e escala mandam mais que a detecção.
+
+### Relativas
+
+Fá menor e lá♭ maior têm exatamente as mesmas sete notas. `Fm Eb Db Ab`
+pode ser lido como `i VII VI III` em fá menor ou `vi V IV I` em lá♭ maior,
+e nenhuma das duas leituras é errada — outros programas de reconhecimento
+de acorde costumam reportar a relativa maior. O desempate aqui é o bônus de
+primeiro acorde, que dá fá menor.
+
+Como a escolha muda só rótulo e cor, o botão **⇄** ao lado do tom troca
+entre as relativas sem transpor nem alterar acorde nenhum: os slots por
+grau são remapeados (`i → vi` indo para maior, `I → iii` voltando), e os
+slots por cifra nem precisam ser tocados, já que suas alturas são
+absolutas.
+
+Isso é diferente do seletor de tônica, que **transpõe**. Se o usuário
+quisesse ler a mesma progressão em lá♭ e trocasse a tônica para Ab, ele
+moveria a música três semitons — não é o que ele quer. Daí o botão
+separado.
 
 ### Escrita — o caminho de volta
 

@@ -191,6 +191,9 @@ select:hover, .btn:hover{ border-color:var(--accent); }
 #chart::placeholder{ color:var(--faint); font-weight:400; }
 #chart:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--glow); }
 #chart[data-bad="1"]{ border-color:var(--dom); }
+.keyrow{ display:flex; gap:6px; align-items:stretch; }
+#relative{ white-space:nowrap; font-size:12px; color:var(--dim); }
+#relative:hover{ color:var(--text); }
 .readout{
   font-family:var(--f-mono); font-size:12.5px; color:var(--accent);
   padding:10px 13px; white-space:nowrap;
@@ -498,8 +501,12 @@ footer{
                  placeholder="Fm Eb Db Ab">
         </div>
         <div class="field">
-          <label>Tom detectado</label>
-          <span class="readout" id="detected">—</span>
+          <label>Tom</label>
+          <div class="keyrow">
+            <span class="readout" id="detected">—</span>
+            <button class="btn" id="relative" type="button"
+                    title="Mesmas notas, outro centro. Não transpõe nada."></button>
+          </div>
         </div>
         <button class="btn primary" id="chart-apply" type="button">Aplicar</button>
       </div>
@@ -951,7 +958,11 @@ function detectKey(chords){
       let score = 0;
       chords.forEach((c, i) => {
         const notes = c.ivs.map(iv => (c.rootPc + iv) % 12);
-        score += notes.filter(n => pcs.has(n)).length / notes.length * 2;
+        // Cada nota fora da escala custa 1.5 — mais do que o bônus de
+        // primeiro acorde. Antes, "Db Eb Fm Ab" saía como Db maior, que
+        // nem contém o Eb: a ordem dos acordes ganhava da harmonia.
+        const fora = notes.filter(n => !pcs.has(n)).length;
+        score += Math.max(-1, 2 - fora * 1.5);
         if (pcs.has(c.rootPc)) score += 1;
         if (i === 0 && c.rootPc === r) score += 1.3;      // o primeiro acorde costuma ser a tônica
         if (i === chords.length - 1 && c.rootPc === r) score += .6;
@@ -1760,6 +1771,7 @@ function buildControls(){
   chart.addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); applyChart(); chart.blur(); } });
   chart.addEventListener("blur", () => { if (chart.value.trim() !== progressionText()) applyChart(); });
   $("#chart-apply").addEventListener("click", applyChart);
+  $("#relative").addEventListener("click", flipRelative);
 
   $("#play").addEventListener("click", () => playing ? stop() : play());
   $("#reroll").addEventListener("click", () => {
@@ -1787,6 +1799,26 @@ function buildControls(){
       state.sel = n - 1; syncInspector(); paintPads(); flash(n-1); chordAudition(n-1);
     }
   });
+}
+
+/* Relativa: fá menor e lá♭ maior têm exatamente as mesmas sete notas, então
+   a mesma progressão pode ser lida das duas formas — é por isso que o
+   Chordify diz Ab onde aqui diz F menor. Trocar entre elas não pode
+   transpor nem mudar acorde nenhum: os graus é que são remapeados. */
+function relativeOf(root, scale){
+  return scale === "minor" ? { root:(root + 3) % 12, scale:"major" }
+                           : { root:(root + 9) % 12, scale:"minor" };
+}
+
+function flipRelative(){
+  const rel = relativeOf(state.root, state.scale);
+  const shift = state.scale === "minor" ? 5 : 2;     // i → vi, ou I → iii
+  state.slots.forEach(sl => {
+    if (sl.mode === "deg") sl.deg = ((sl.deg - 1 + shift) % 7) + 1;
+  });
+  state.root = rel.root;
+  state.scale = rel.scale;
+  refresh();
 }
 
 /* Converte um slot digitado em slot por grau, para poder editá-lo com os
@@ -1868,6 +1900,8 @@ function syncInspector(){
   $("#engine-read").textContent =
     `${model.events.length} notas · ${state.voiceLead ? "suavizado" : "sem suavizar"} · seed ${state.seed}`;
   $("#detected").textContent = noteName(state.root, state.root, state.scale) + " " + SCALES[state.scale].label.toLowerCase();
+  const rel = relativeOf(state.root, state.scale);
+  $("#relative").textContent = "⇄ " + noteName(rel.root, rel.root, rel.scale) + " " + SCALES[rel.scale].label.toLowerCase();
   const chart = $("#chart");
   if (document.activeElement !== chart) chart.value = progressionText();
   KNOBS.forEach((k, i) => { const el = $("#knobs").children[i]; if (el && el._paint) el._paint(); });
