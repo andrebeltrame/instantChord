@@ -11,6 +11,7 @@ Escopo fechado. Tudo abaixo já está resolvido no protótipo.
 - [ ] Gate, Humanize, Direção, Seed
 - [ ] Condução de vozes automática (ligada por padrão)
 - [ ] Tonalidade e escala; entrada por grau
+- [ ] Campo de cifras: digitar a progressão, detectar o tom, transpor
 - [ ] Preview ao vivo na cadeia MIDI da track
 - [ ] Botão **Write** → `add_new_notes` na clip selecionada
 - [ ] Persistência do estado no set (`pattrstorage`)

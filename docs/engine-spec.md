@@ -17,10 +17,81 @@ Semitons acima da tônica:
 | Menor harmônico | 0 2 3 5 7 8 11 |
 | Frígio | 0 1 3 5 7 8 10 |
 
-A entrada é sempre por **grau** (1–7), nunca por nome de acorde. Você pensa
-em função, o device soletra.
+A entrada por grau vai de 1 a 7 e é relativa à escala. Para entrada por
+nome de acorde, ver a seção 2.
 
-## 2. Construção do acorde
+## 2. Cifras
+
+A entrada por grau é o caminho para compor; a entrada por **cifra** é o
+caminho para *pegar* — trazer uma progressão que você ouviu em outra música.
+Os dois convivem: cada slot tem um `mode`.
+
+| `mode` | Como o acorde é definido | Como é editado |
+| --- | --- | --- |
+| `deg` | Grau na escala + extensão + sus | Botões do inspetor |
+| `abs` | Fundamental + intervalos absolutos | Ao mexer em grau/extensão/sus, converte para `deg` |
+
+### Sintaxe
+
+```
+Fm Eb Db Ab                 quatro compassos, um acorde cada
+Dm7 G7 | Cmaj7              "|" marca compasso
+Am | F G | C                dois acordes num compasso dividem ele
+Am/C                        baixo invertido
+```
+
+Sem `|`, cada acorde ocupa um compasso. Com `|`, os acordes de um compasso
+dividem as 16 semicolcheias o mais uniformemente possível (3 acordes →
+6+5+5), então `slot.len` pode ser fracionário — mas `len × 4` é sempre
+inteiro, que é o que a grade rítmica exige.
+
+### Cifras aceitas
+
+Tríades `C Cm Cdim Caug Csus2 Csus4 C5` · sétimas `C7 Cmaj7 CM7 CΔ Cm7 Cdim7
+Cm7b5 Cø` · extensões `C9 C11 C13 Cmaj9 C6 C6/9 Cadd9` · alterações
+`C7b9 C7#9 C7#11 C7b13 Cm7b5 C7#5` · baixo invertido `/G`.
+
+Regras que não são óbvias: o `M` maiúsculo sozinho é sétima maior (`CM7` =
+`Cmaj7`), o `m` minúsculo é menor; o 11 sai do 13 maior mas fica no 13
+menor; `dim7` leva sétima diminuta (9 semitons) e `m7b5` leva menor (10).
+
+### Detecção de tonalidade
+
+Testa as 12 tônicas × 6 escalas e pontua:
+
+| Sinal | Peso |
+| --- | --- |
+| Notas do acorde dentro da escala | até 2 por acorde |
+| Fundamental do acorde na escala | 1 |
+| Primeiro acorde na tônica candidata | 1.3 |
+| Último acorde na tônica candidata | 0.6 |
+| **Acorde dominante uma quinta acima da candidata** | **1.6** |
+| Escala maior ou menor natural | 0.4 |
+
+O peso da cadência V7→I é o que faz `Dm7 G7 Cmaj7` ser lido como dó maior e
+não ré dórico. Progressões genuinamente ambíguas continuam ambíguas — os
+seletores de tônica e escala mandam mais que a detecção.
+
+### Escrita — o caminho de volta
+
+`writeChordSymbol` reconstrói a cifra a partir das alturas. É o que permite
+duas coisas:
+
+1. O campo de texto **acompanha** os pads: mexeu numa inversão ou extensão,
+   a cifra se reescreve.
+2. **Trocar a tônica transpõe** as cifras digitadas. Pegou a progressão em
+   fá menor, joga para sol menor num clique.
+
+A escolha entre sustenido e bemol vem da armadura do *relativo maior* do
+modo, não da tônica sozinha: sol menor escreve `Gm F Eb Bb`, sol maior
+escreve com sustenidos.
+
+**Limitação conhecida:** as duas tonalidades de seis bemóis (mi♭ menor e
+sol♭ maior) grafam um acorde enarmonicamente — `B` no lugar de `Cb`. Grafar
+`Cb` exigiria rastrear nomes de letra, não classes de altura. Não vale o
+custo para dois casos.
+
+## 3. Construção do acorde
 
 Índices relativos ao grau, empilhando terças na escala:
 
@@ -32,7 +103,7 @@ A qualidade (m, dim, aug, maj7, 7…) é **derivada** dos intervalos
 resultantes, não declarada. Em menor harmônico o III sai `III+` sozinho,
 porque é isso que a escala produz.
 
-## 3. Função harmônica
+## 4. Função harmônica
 
 Determina a cor do pad e da nota. Depende do modo:
 
@@ -48,7 +119,7 @@ I, III                   → tônica
 Sem a regra do sensível, o `VII` de `Fm Eb Db Ab` sairia pintado como
 dominante, o que está musicalmente errado.
 
-## 4. Vozes
+## 5. Vozes
 
 Pipeline, nesta ordem:
 
@@ -66,7 +137,7 @@ Pipeline, nesta ordem:
 A condução de vozes é o item que mais muda o resultado. Sem ela a progressão
 soa digitada; com ela soa tocada.
 
-## 5. Os três macros
+## 6. Os três macros
 
 ### Motion — articulação
 
@@ -101,7 +172,7 @@ Máscaras de 16 semicolcheias por compasso:
 
 Em modo arpejo a máscara é ignorada — a grade vira 1/8 ou 1/16 corridas.
 
-## 6. Controles secundários
+## 7. Controles secundários
 
 - **Gate** — duração da nota, `0.15 + gate^1.3 × 1.35` da janela do evento.
   Acima de 1.0 as notas se sobrepõem (legato).
@@ -111,7 +182,7 @@ Em modo arpejo a máscara é ignorada — a grade vira 1/8 ou 1/16 corridas.
 - **Seed** — `↺ Variar` avança o seed por LCG. Mesmo seed, mesmo resultado —
   dá para voltar a uma variação que você gostou.
 
-## 7. Velocity
+## 8. Velocity
 
 ```
 base 96
@@ -121,7 +192,7 @@ base 96
 clamp 24 … 127
 ```
 
-## 8. Saída
+## 9. Saída
 
 Um array de eventos, direto para `add_new_notes`:
 
@@ -136,7 +207,7 @@ Um array de eventos, direto para `add_new_notes`:
 
 O botão **Lista de notas** no protótipo mostra exatamente esse array.
 
-## 9. Aleatoriedade
+## 10. Aleatoriedade
 
 `mulberry32` semeado pelo `seed` do estado. Nada de `Math.random()` — a
 mesma progressão com o mesmo seed tem que dar o mesmo MIDI, sempre.

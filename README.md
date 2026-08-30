@@ -9,6 +9,13 @@ entrega sempre acorde bloco e vive no painel *Generate* do clip editor, que
 tem uns 120 px de largura. O InstantChord tira a engine dali e coloca numa
 interface com espaço para trabalhar.
 
+Duas maneiras de montar a progressão, e elas conversam:
+
+- **Por grau** — clica nos pads I–VII dentro da tonalidade. Para compor.
+- **Por cifra** — digita `Fm Eb Db Ab` ou `Dm7 G7 | Cmaj7`. Para pegar uma
+  progressão de outra música. O device descobre o tom, e trocar a tônica
+  transpõe tudo.
+
 ## Protótipo
 
 `prototype/` traz um protótipo navegável e sonoro — a engine completa em

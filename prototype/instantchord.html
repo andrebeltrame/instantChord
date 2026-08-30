@@ -216,6 +216,31 @@ select:hover, .btn:hover{ border-color:var(--accent); }
 
 .spacer{ flex:1 1 auto; }
 
+.chartrack{ flex-direction:column; align-items:stretch; gap:10px; }
+.chartrow{ display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; }
+.field.grow{ flex:1 1 260px; }
+#chart{
+  width:100%;
+  font-family:var(--f-mono); font-size:15px; font-weight:500; letter-spacing:.03em;
+  color:var(--text); background:var(--sunk);
+  border:1px solid var(--line); border-radius:var(--r-md);
+  padding:10px 13px;
+}
+#chart::placeholder{ color:var(--faint); font-weight:400; }
+#chart:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--glow); }
+#chart[data-bad="1"]{ border-color:var(--dom); }
+.readout{
+  font-family:var(--f-mono); font-size:12.5px; color:var(--accent);
+  padding:10px 13px; white-space:nowrap;
+  background:var(--raised); border:1px solid var(--line-soft); border-radius:var(--r-md);
+}
+.hint{ margin:0; font-size:11.5px; line-height:1.6; color:var(--faint); max-width:88ch; }
+.hint code{
+  font-family:var(--f-mono); font-size:10.5px; color:var(--dim);
+  background:var(--sunk); border:1px solid var(--line-soft);
+  padding:1px 5px; border-radius:4px;
+}
+
 /* ── Pads ─────────────────────────────────────────────────── */
 
 .pads{
@@ -503,6 +528,26 @@ footer{
       </div>
     </div>
 
+    <!-- cifras -->
+    <div class="rack chartrack">
+      <div class="chartrow">
+        <div class="field grow">
+          <label for="chart">Cifras — digite a progressão</label>
+          <input id="chart" type="text" spellcheck="false" autocapitalize="off" autocomplete="off"
+                 placeholder="Fm Eb Db Ab">
+        </div>
+        <div class="field">
+          <label>Tom detectado</label>
+          <span class="readout" id="detected">—</span>
+        </div>
+        <button class="btn primary" id="chart-apply" type="button">Aplicar</button>
+      </div>
+      <p class="hint">Separe por espaço; <code>|</code> marca compasso e dois acordes dentro dele dividem o compasso.
+        Aceita <code>m7</code> <code>maj9</code> <code>dim7</code> <code>sus4</code> <code>add9</code>
+        <code>13</code> <code>m7b5</code> <code>7#9</code> e baixo invertido <code>Am/C</code>.
+        O campo também escreve: mexa nos pads e ele acompanha — e trocar a tônica transpõe o que você digitou.</p>
+    </div>
+
     <!-- pads -->
     <div class="pads" id="pads"></div>
 
@@ -668,7 +713,16 @@ footer{
 
 const NAMES_S = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const NAMES_F = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
-const FLAT_ROOTS = new Set([1,3,5,8,10]);
+
+/* Sustenido ou bemol depende da armadura, não da tônica sozinha: sol menor
+   se escreve com bemóis (Gm F Eb Bb) e sol maior com sustenidos. A conta é
+   feita no relativo maior de cada modo. */
+const REL_MAJOR = { major:0, dorian:10, phrygian:8, mixolydian:5, minor:3, harmonicMinor:3 };
+const FLAT_MAJORS = new Set([5,10,3,8,1,6]);      // F Bb Eb Ab Db Gb
+
+function useFlats(root, scale){
+  return FLAT_MAJORS.has((root + (REL_MAJOR[scale] || 0)) % 12);
+}
 
 const SCALES = {
   major:         { label:"Maior",           steps:[0,2,4,5,7,9,11] },
@@ -714,31 +768,53 @@ function step(scaleKey, i){
   return s[((i % 7) + 7) % 7] + 12 * Math.floor(i / 7);
 }
 
-function noteName(pc, root){
-  const t = FLAT_ROOTS.has(root) ? NAMES_F : NAMES_S;
+function noteName(pc, root, scale){
+  const t = useFlats(root, scale || "major") ? NAMES_F : NAMES_S;
   return t[((pc % 12) + 12) % 12];
 }
 
-/* Constrói o acorde em posição fundamental, centrado em torno de C4. */
-function buildChord(slot, st){
-  const idx = chordIndices(slot);
-  const d = slot.deg - 1;
-  const rootSemi = step(st.scale, d);
-  const pitches = idx.map(i => 60 + st.root + step(st.scale, d + i));
-
-  // Reduz para o registro central.
+/* Coloca o acorde no registro central: fundamental entre MIDI 54 e 66. */
+function center(pitches){
   let shift = 0;
   while (pitches[0] + shift > 66) shift -= 12;
   while (pitches[0] + shift < 54) shift += 12;
-  const voiced = pitches.map(p => p + shift);
+  return pitches.map(p => p + shift);
+}
 
+/* Constrói o acorde em posição fundamental, centrado em torno de C4.
+   Dois caminhos: slot por grau (mode "deg") ou cifra digitada ("abs"). */
+function buildChord(slot, st){
+  if (slot.mode === "abs") return buildLiteral(slot, st);
+  const idx = chordIndices(slot);
+  const d = slot.deg - 1;
+  const rootSemi = step(st.scale, d);
+  const voiced = center(idx.map(i => 60 + st.root + step(st.scale, d + i)));
   const semis = idx.map(i => step(st.scale, d + i) - rootSemi);
   return {
     pitches: voiced,
     rootPc: (st.root + rootSemi) % 12,
+    bassPc: null,
     quality: quality(semis, slot),
     roman: roman(semis, slot),
     fn: functionOf(slot.deg, st.scale),
+    diatonic: true,
+  };
+}
+
+/* Acorde vindo de cifra: as alturas já estão determinadas, o que falta é
+   situá-lo na tonalidade para que o algarismo romano e a cor de função
+   continuem fazendo sentido. */
+function buildLiteral(slot, st){
+  const r = analyse(slot, st);
+  return {
+    pitches: center(slot.ivs.map(iv => 60 + slot.rootPc + iv)),
+    rootPc: slot.rootPc,
+    bassPc: slot.bassPc,
+    quality: "",
+    sym: slot.token,
+    roman: r.roman,
+    fn: r.fn,
+    diatonic: r.diatonic,
   };
 }
 
@@ -765,14 +841,221 @@ function roman(semis, slot){
   if (!slot.sus && third === 3 && fifth === 6) r += "°";
   if (!slot.sus && third === 4 && fifth === 8) r += "+";
   if (slot.sus) r += "sus" + slot.sus;
-  if (slot.ext > 5) r += slot.ext;
+  if (slot.ext > 5) r += (semis[3] === 11 ? "maj" : "") + slot.ext;
   return r;
 }
 
-function symbol(ch, st){ return noteName(ch.rootPc, st.root) + ch.quality; }
+function symbol(ch, st){ return ch.sym || noteName(ch.rootPc, st.root, st.scale) + ch.quality; }
 
 /* ═══════════════════════════════════════════════════════════
-   2. VOZES — inversão, condução, spread, densidade
+   2. CIFRAS — leitura e escrita
+   ═══════════════════════════════════════════════════════════ */
+
+const LETTER_PC = { c:0, d:2, e:4, f:5, g:7, a:9, b:11 };
+
+/* Lê uma cifra solta e devolve as alturas em semitons acima da fundamental.
+   Cobre o que se escreve num caderno de música de verdade: m7, maj9, dim,
+   sus4, add9, 13, m7b5, alterações e baixo invertido (Am/C). */
+function parseChordSymbol(raw){
+  const token = String(raw).trim();
+  let s = token
+    .replace(/[Δ∆]/g, "maj7")
+    .replace(/[øØ]/g, "m7b5")
+    .replace(/[°º]/g, "dim")
+    .replace(/♯/g, "#").replace(/♭/g, "b")
+    .replace(/[–—−]/g, "-")
+    .replace(/\s+/g, "");
+  const m = /^([A-Ga-g])([#b]*)(.*)$/.exec(s);
+  if (!m) return null;
+
+  let rootPc = LETTER_PC[m[1].toLowerCase()];
+  for (const c of m[2]) rootPc += (c === "#" ? 1 : -1);
+  rootPc = ((rootPc % 12) + 12) % 12;
+
+  let q = m[3], bassPc = null;
+  const slash = /\/([A-Ga-g])([#b]*)$/.exec(q);
+  if (slash){
+    bassPc = LETTER_PC[slash[1].toLowerCase()];
+    for (const c of slash[2]) bassPc += (c === "#" ? 1 : -1);
+    bassPc = ((bassPc % 12) + 12) % 12;
+    q = q.slice(0, slash.index);
+  }
+
+  // Tira os tokens que atrapalhariam a leitura do miolo da cifra.
+  const alts = [];
+  q = q.replace(/add(9|11|13)/gi, t => { alts.push(t.toLowerCase()); return ""; });
+  q = q.replace(/(b5|#5|b9|#9|#11|b13)/g, t => { alts.push(t); return ""; });
+  const sus = /sus2/i.test(q) ? 2 : /sus/i.test(q) ? 4 : 0;
+  q = q.replace(/sus[24]?/gi, "");
+  const sixNine = /(6\/9|69)/.test(q);
+  q = q.replace(/(6\/9|69)/g, "");
+
+  const upperM = /^M(?![a-z])/.test(q);           // "CM7" é maior com sétima maior
+  const isMaj7 = upperM || /maj/i.test(q);
+  const isMin  = !isMaj7 && /^(-|min|m(?!aj))/i.test(q);
+  const isDim  = /dim/i.test(q);
+  const isAug  = /(aug|\+)/i.test(q);
+  const ext    = /13/.test(q) ? 13 : /11/.test(q) ? 11 : /9/.test(q) ? 9 : /7/.test(q) ? 7 : 0;
+  const six    = !ext && /6/.test(q);
+
+  let ivs;
+  if (sus === 2)   ivs = [0,2,7];
+  else if (sus === 4) ivs = [0,5,7];
+  else if (isDim)  ivs = [0,3,6];
+  else if (isAug)  ivs = [0,4,8];
+  else if (isMin)  ivs = [0,3,7];
+  else             ivs = [0,4,7];
+
+  if (six || sixNine) ivs.push(9);
+  if (ext >= 7){
+    if (isDim && !alts.includes("b5")) ivs.push(9);        // dim7 leva sétima diminuta
+    else if (isMaj7) ivs.push(11);
+    else ivs.push(10);
+  }
+  if (ext >= 9 || sixNine) ivs.push(14);
+  if (ext === 11 || (ext === 13 && isMin)) ivs.push(17);   // o 11 sai do 13 maior
+  if (ext >= 13) ivs.push(21);
+  if (alts.includes("add9"))  ivs.push(14);
+  if (alts.includes("add11")) ivs.push(17);
+  if (alts.includes("add13")) ivs.push(21);
+
+  const swap = (from, to) => { const i = ivs.indexOf(from); if (i >= 0) ivs[i] = to; else ivs.push(to); };
+  if (alts.includes("b5"))  swap(7, 6);
+  if (alts.includes("#5"))  swap(7, 8);
+  if (alts.includes("b9"))  swap(14, 13);
+  if (alts.includes("#9"))  swap(14, 15);
+  if (alts.includes("#11")) swap(17, 18);
+  if (alts.includes("b13")) swap(21, 20);
+
+  ivs = [...new Set(ivs)].sort((a,b) => a-b);
+  return { mode:"abs", rootPc, ivs, bassPc, token };
+}
+
+/* O inverso do parser: das alturas de volta para a cifra. É o que permite
+   transpor uma progressão digitada — as notas mudam, o texto acompanha. */
+function writeChordSymbol(c, keyRoot, keyScale){
+  const S = new Set(c.ivs), h = n => S.has(n);
+  const isSus = !h(3) && !h(4);
+  const dim = h(3) && h(6);
+  const aug = h(4) && h(8) && !h(7);
+  const adds = [];
+
+  let base;
+  if (isSus)                  base = h(2) ? "sus2" : h(5) ? "sus4" : "5";
+  else if (dim && h(10))      base = "m7b5";
+  else if (dim && h(9))       base = "dim7";
+  else if (dim)               base = "dim";
+  else if (aug)               base = "aug";
+  else if (h(3))              base = "m";
+  else                        base = "";
+
+  let ext = "";
+  if (!/m7b5|dim7/.test(base)){
+    if (h(10) || h(11)){
+      const top = h(21) ? 13 : h(17) ? 11 : h(14) ? 9 : 7;
+      ext = (h(11) ? "maj" : "") + top;
+    }
+    else if (h(9) && h(14)) ext = "6/9";
+    else if (h(9))          ext = "6";
+    else if (h(14))         adds.push("add9");
+  }
+
+  if (h(13) && !h(14))          adds.push("b9");
+  if (h(15) && !h(14))          adds.push("#9");
+  if (h(18) && !h(17))          adds.push("#11");
+  if (h(20) && !h(21))          adds.push("b13");
+  if (h(6) && !dim && !isSus)   adds.push("b5");
+  if (h(8) && h(7))             adds.push("#5");
+
+  let out = noteName(c.rootPc, keyRoot, keyScale) + base + ext + adds.join("");
+  if (c.bassPc != null && c.bassPc !== c.rootPc) out += "/" + noteName(c.bassPc, keyRoot, keyScale);
+  return out;
+}
+
+/* Uma linha de cifras vira slots. Sem "|", cada acorde ocupa um compasso.
+   Com "|", os acordes dentro de um compasso dividem ele. */
+function parseProgression(text){
+  const slots = [], bad = [];
+  const take = (tok, len) => {
+    const c = parseChordSymbol(tok);
+    if (c) slots.push({ ...c, inv:0, ext:5, sus:0, len, on:true });
+    else bad.push(tok);
+  };
+  if (text.includes("|")){
+    text.split("|").forEach(bar => {
+      const toks = bar.trim().split(/[\s,]+/).filter(Boolean);
+      if (!toks.length) return;
+      const base = Math.floor(16 / toks.length), extra = 16 % toks.length;
+      toks.forEach((t, i) => take(t, (base + (i < extra ? 1 : 0)) / 4));
+    });
+  } else {
+    text.trim().split(/[\s,]+/).filter(Boolean).forEach(t => take(t, 4));
+  }
+  return { slots, bad };
+}
+
+/* Descobre em que tom a progressão está, para que os graus e as cores de
+   função continuem valendo depois de digitar. */
+function detectKey(chords){
+  let best = { root:0, scale:"major", score:-Infinity };
+  for (let r = 0; r < 12; r++){
+    for (const sc of Object.keys(SCALES)){
+      const pcs = new Set(SCALES[sc].steps.map(x => (r + x) % 12));
+      let score = (sc === "major" || sc === "minor") ? .4 : 0;
+      chords.forEach((c, i) => {
+        const notes = c.ivs.map(iv => (c.rootPc + iv) % 12);
+        score += notes.filter(n => pcs.has(n)).length / notes.length * 2;
+        if (pcs.has(c.rootPc)) score += 1;
+        if (i === 0 && c.rootPc === r) score += 1.3;      // o primeiro acorde costuma ser a tônica
+        if (i === chords.length - 1 && c.rootPc === r) score += .6;
+        // Um acorde dominante uma quinta acima aponta a tônica com muito
+        // mais força do que a ordem dos acordes: sem isto, "Dm7 G7 Cmaj7"
+        // seria lido como ré dórico em vez de dó maior.
+        const dom = c.ivs.includes(4) && c.ivs.includes(10) && !c.ivs.includes(11);
+        if (dom && (c.rootPc + 5) % 12 === r) score += 1.6;
+      });
+      if (score > best.score) best = { root:r, scale:sc, score };
+    }
+  }
+  return best;
+}
+
+/* Situa um acorde literal na tonalidade: algarismo romano (com acidente
+   quando for empréstimo) e função harmônica. */
+function analyse(slot, st){
+  const steps = SCALES[st.scale].steps;
+  const pcs = new Set(steps.map(x => (st.root + x) % 12));
+  const iv = (((slot.rootPc - st.root) % 12) + 12) % 12;
+
+  let deg = steps.findIndex(x => x % 12 === iv), acc = "";
+  if (deg < 0){
+    const above = steps.findIndex(x => x % 12 > iv);
+    deg = above < 0 ? 6 : above;
+    acc = "♭";
+  }
+
+  const iv2 = slot.ivs;
+  const minorish = iv2.includes(3);
+  const maj7 = iv2.includes(11);
+  let r = acc + (minorish ? ROMAN[deg].toLowerCase() : ROMAN[deg]);
+  if (iv2.includes(6) && minorish) r += iv2.includes(10) ? "ø" : "°";
+  if (iv2.includes(8) && !iv2.includes(7)) r += "+";
+  const m7 = maj7 ? "maj" : "";
+  if (iv2.includes(21)) r += m7 + "13";
+  else if (iv2.includes(17)) r += m7 + "11";
+  else if (iv2.includes(14)) r += m7 + "9";
+  else if (iv2.includes(10) || maj7) r += m7 + "7";
+
+  return {
+    roman: r,
+    fn: functionOf(deg + 1, st.scale),
+    deg: deg + 1,
+    diatonic: !acc && slot.ivs.every(x => pcs.has((slot.rootPc + x) % 12)),
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3. VOZES — inversão, condução, spread, densidade
    ═══════════════════════════════════════════════════════════ */
 
 function invert(pitches, n){
@@ -823,6 +1106,16 @@ function applySpread(v, s){
   return out.sort((a,b)=>a-b);
 }
 
+/* O baixo é a fundamental — ou o baixo invertido de uma cifra tipo Am/C —
+   colocada logo abaixo da voz mais grave, com pelo menos uma sexta de
+   folga para não embolar. */
+function bassNote(pc, above){
+  let p = ((pc % 12) + 12) % 12;
+  while (p < above - 12) p += 12;
+  while (p > above - 7) p -= 12;
+  return Math.max(28, p);
+}
+
 /* Density corta vozes de cima para baixo, preservando fundamental,
    terça e sétima — as que carregam a identidade do acorde. */
 function trimVoices(v, density){
@@ -833,7 +1126,7 @@ function trimVoices(v, density){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   3. RITMO E ARTICULAÇÃO
+   4. RITMO E ARTICULAÇÃO
    ═══════════════════════════════════════════════════════════ */
 
 // Máscaras de 16 semicolcheias por compasso, da mais rala à mais densa.
@@ -880,7 +1173,7 @@ function arpOrder(v, dir, rnd){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   4. GERADOR — o contrato com o device Max
+   5. GERADOR — o contrato com o device Max
    ═══════════════════════════════════════════════════════════ */
 
 function generate(st){
@@ -902,7 +1195,7 @@ function generate(st){
     prev = v.slice();
 
     let voices = trimVoices(applySpread(v, st.spread), st.density);
-    if (st.bass) voices = [Math.max(28, voices[0] - 12), ...voices];
+    if (st.bass) voices = [bassNote(ch.bassPc != null ? ch.bassPc : ch.rootPc, voices[0]), ...voices];
 
     ch.voices = voices;
     chords.push(ch);
@@ -964,7 +1257,7 @@ function mkEvent(si, ch, pitch, start, dur, vel, off, st, rnd, isBass){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   5. ESTADO
+   6. ESTADO
    ═══════════════════════════════════════════════════════════ */
 
 const PRESETS = {
@@ -979,7 +1272,7 @@ const PRESETS = {
 
 const state = {
   root: 5, scale: "minor", bpm: 92, count: 4,
-  slots: Array.from({length:8}, (_,i) => ({ deg:[1,7,6,3,1,7,6,3][i], ext:5, sus:0, inv:0, len:4, on:true })),
+  slots: Array.from({length:8}, (_,i) => ({ mode:"deg", deg:[1,7,6,3,1,7,6,3][i], ext:5, sus:0, inv:0, len:4, on:true })),
   motion: .40, spread: .30, density: .48,
   gate: .62, hum: .28, dir: "up",
   voiceLead: true, bass: true,
@@ -989,7 +1282,7 @@ const state = {
 let model = generate(state);
 
 /* ═══════════════════════════════════════════════════════════
-   6. ÁUDIO
+   7. ÁUDIO
    ═══════════════════════════════════════════════════════════ */
 
 let ctx = null, master = null, delay = null, session = [];
@@ -1097,7 +1390,7 @@ function tick(){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   7. DESENHO
+   8. DESENHO
    ═══════════════════════════════════════════════════════════ */
 
 function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
@@ -1226,9 +1519,12 @@ function drawRoll(playhead){
     g.globalAlpha = i === state.sel ? .16 : .07;
     g.fillRect(x, 0, s.len * bw, 15);
     g.globalAlpha = 1;
+    g.save();                                   // rótulo não invade o slot vizinho
+    g.beginPath(); g.rect(x, 0, s.len * bw - 3, 15); g.clip();
     g.fillStyle = fnColor(ch.fn);
     g.font = '600 10px "Azeret Mono", monospace';
     g.fillText(ch.roman + "  " + symbol(ch, state), x + 6, 11);
+    g.restore();
     acc += s.len;
   });
 
@@ -1254,7 +1550,7 @@ function drawRoll(playhead){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   8. INTERFACE
+   9. INTERFACE
    ═══════════════════════════════════════════════════════════ */
 
 const $ = s => document.querySelector(s);
@@ -1288,6 +1584,7 @@ function paintPads(){
     b.querySelector(".pad-sym").textContent = symbol(ch, state);
     const meta = [];
     meta.push(ch.voices.length + " vozes");
+    if (!ch.diatonic) meta.push("empréstimo");
     if (slot.inv) meta.push("inv " + slot.inv);
     if (slot.len !== 4) meta.push(slot.len === 2 ? "½ comp" : "2 comp");
     b.querySelector(".pad-meta").textContent = meta.join(" · ");
@@ -1331,6 +1628,7 @@ function attachPad(el, i){
     el.dataset.hud = "0";
     if (!moved){
       if (ev.altKey){
+        toDegree(i);
         const s = state.slots[i];
         s.deg = s.deg % 7 + 1;
         refresh();
@@ -1441,10 +1739,23 @@ function buildControls(){
   const rootSel = $("#root");
   NAMES_S.forEach((n, i) => {
     const o = document.createElement("option");
-    o.value = i; o.textContent = FLAT_ROOTS.has(i) ? NAMES_F[i] : n;
+    o.value = i; o.textContent = n;
     rootSel.appendChild(o);
   });
-  rootSel.addEventListener("change", () => { state.root = +rootSel.value; refresh(); });
+  // Trocar a tônica transpõe o que foi digitado — é o gesto de pegar a
+  // progressão de outra música e trazer para o tom da sua faixa.
+  rootSel.addEventListener("change", () => {
+    const to = +rootSel.value;
+    const d = (((to - state.root) % 12) + 12) % 12;
+    state.root = to;
+    if (d) state.slots.forEach(sl => {
+      if (sl.mode !== "abs") return;
+      sl.rootPc = (sl.rootPc + d) % 12;
+      if (sl.bassPc != null) sl.bassPc = (sl.bassPc + d) % 12;
+      sl.token = writeChordSymbol(sl, to, state.scale);
+    });
+    refresh();
+  });
 
   const scSel = $("#scale");
   Object.entries(SCALES).forEach(([k, v]) => {
@@ -1467,6 +1778,7 @@ function buildControls(){
     const p = PRESETS[pSel.value]; if (!p) return;
     state.root = p.root; state.scale = p.scale; state.count = p.degs.length;
     p.degs.forEach((d, i) => {
+      state.slots[i].mode = "deg";
       state.slots[i].deg = d;
       state.slots[i].ext = p.exts ? p.exts[i] : 5;
       state.slots[i].inv = 0; state.slots[i].sus = 0; state.slots[i].on = true; state.slots[i].len = 4;
@@ -1485,11 +1797,11 @@ function buildControls(){
     seg("count",  () => state.count, v => { state.count = +v; if (state.sel >= state.count) state.sel = 0; buildPads(); }),
     seg("theme",  () => themeMode,   v => setTheme(v)),
     seg("dir",    () => state.dir,   v => state.dir = v),
-    seg("ext",    () => state.slots[state.sel].ext, v => state.slots[state.sel].ext = +v),
-    seg("sus",    () => state.slots[state.sel].sus, v => state.slots[state.sel].sus = +v),
+    seg("ext",    () => state.slots[state.sel].ext, v => { toDegree(state.sel); state.slots[state.sel].ext = +v; }),
+    seg("sus",    () => state.slots[state.sel].sus, v => { toDegree(state.sel); state.slots[state.sel].sus = +v; }),
     seg("len",    () => state.slots[state.sel].len, v => state.slots[state.sel].len = +v),
     seg("on",     () => state.slots[state.sel].on ? 1 : 0, v => state.slots[state.sel].on = v === "1"),
-    seg("degrees",() => state.slots[state.sel].deg, v => state.slots[state.sel].deg = +v),
+    seg("degrees",() => state.slots[state.sel].deg, v => { toDegree(state.sel); state.slots[state.sel].deg = +v; }),
   );
 
   const gate = $("#gate"), hum = $("#hum");
@@ -1498,6 +1810,11 @@ function buildControls(){
 
   $("#vl").addEventListener("click", () => { state.voiceLead = !state.voiceLead; refresh(); });
   $("#bassbtn").addEventListener("click", () => { state.bass = !state.bass; refresh(); });
+
+  const chart = $("#chart");
+  chart.addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); applyChart(); chart.blur(); } });
+  chart.addEventListener("blur", () => { if (chart.value.trim() !== progressionText()) applyChart(); });
+  $("#chart-apply").addEventListener("click", applyChart);
 
   $("#play").addEventListener("click", () => playing ? stop() : play());
   $("#reroll").addEventListener("click", () => {
@@ -1527,6 +1844,60 @@ function buildControls(){
   });
 }
 
+/* Converte um slot digitado em slot por grau, para poder editá-lo com os
+   controles. Preserva a fundamental sempre que ela existir na escala. */
+function toDegree(i){
+  const s = state.slots[i];
+  if (s.mode !== "abs") return;
+  const a = analyse(s, state);
+  s.mode = "deg";
+  s.deg = a.deg;
+  s.ext = s.ivs.includes(21) ? 13 : s.ivs.includes(17) ? 11
+        : s.ivs.includes(14) ? 9 : (s.ivs.includes(10) || s.ivs.includes(11)) ? 7 : 5;
+  s.sus = s.ivs.includes(2) && !s.ivs.includes(3) && !s.ivs.includes(4) ? 2
+        : s.ivs.includes(5) && !s.ivs.includes(3) && !s.ivs.includes(4) ? 4 : 0;
+}
+
+/* Texto ← estado. Só usa "|" quando algum compasso tem mais de um acorde. */
+function progressionText(){
+  const bars = [];
+  let cur = [], acc = 0;
+  state.slots.slice(0, state.count).forEach((s, i) => {
+    const ch = model.chords[i];
+    cur.push(ch ? symbol(ch, state) : "?");
+    acc += s.len;
+    if (acc >= 4 - 1e-6){ bars.push(cur); cur = []; acc = 0; }
+  });
+  if (cur.length) bars.push(cur);
+  const split = bars.some(b => b.length > 1);
+  return split ? bars.map(b => b.join(" ")).join(" | ") : bars.flat().join(" ");
+}
+
+/* Texto → estado. */
+function applyChart(){
+  const el = $("#chart");
+  const { slots, bad } = parseProgression(el.value);
+  if (!slots.length){
+    el.dataset.bad = "1";
+    toast("Não reconheci nenhuma cifra aí");
+    return;
+  }
+  const over = slots.length > 8;
+  const use = slots.slice(0, 8);
+  const key = detectKey(use);
+  state.root = key.root; state.scale = key.scale;
+  state.count = use.length;
+  state.sel = 0;
+  use.forEach((c, i) => { state.slots[i] = c; });
+  el.dataset.bad = bad.length ? "1" : "0";
+  buildPads();
+  refresh();
+  const msg = [];
+  if (bad.length) msg.push("ignorei " + bad.join(", "));
+  if (over) msg.push("cortei em 8 compassos");
+  toast(msg.length ? msg.join(" · ") : `${use.length} acordes em ${noteName(key.root, key.root, key.scale)} ${SCALES[key.scale].label.toLowerCase()}`);
+}
+
 function syncInspector(){
   const s = state.slots[state.sel];
   const ch = model.chords[state.sel];
@@ -1538,7 +1909,7 @@ function syncInspector(){
   [...$("#degrees").querySelectorAll("button")].forEach(b => {
     const d = +b.dataset.v;
     b.setAttribute("aria-pressed", String(d === s.deg));
-    const tmp = { ...s, deg: d };
+    const tmp = { ...s, mode:"deg", deg: d };
     const c = buildChord(tmp, state);
     b.textContent = c.roman;
     b.style.setProperty("--dg", fnColor(c.fn));
@@ -1546,6 +1917,9 @@ function syncInspector(){
   syncs.forEach(f => f());
   $("#vl").setAttribute("aria-pressed", String(state.voiceLead));
   $("#bassbtn").setAttribute("aria-pressed", String(state.bass));
+  [...$("#root").options].forEach((o, i) => {
+    o.textContent = useFlats(i, state.scale) ? NAMES_F[i] : NAMES_S[i];
+  });
   $("#root").value = state.root;
   $("#scale").value = state.scale;
   $("#bpm").value = state.bpm;
@@ -1555,6 +1929,9 @@ function syncInspector(){
   $("#hum-o").textContent = Math.round(state.hum * 100) + "%";
   $("#engine-read").textContent =
     `${model.events.length} notas · ${state.voiceLead ? "condução ligada" : "sem condução"} · seed ${state.seed}`;
+  $("#detected").textContent = noteName(state.root, state.root, state.scale) + " " + SCALES[state.scale].label.toLowerCase();
+  const chart = $("#chart");
+  if (document.activeElement !== chart) chart.value = progressionText();
   KNOBS.forEach((k, i) => { const el = $("#knobs").children[i]; if (el && el._paint) el._paint(); });
 }
 
@@ -1562,7 +1939,7 @@ function fillOut(){
   const tb = $("#out-body");
   const rows = model.events.slice().sort((a,b) => a.t - b.t).map(e => {
     const oct = Math.floor(e.pitch / 12) - 1;
-    const nm = noteName(e.pitch, state.root) + oct;
+    const nm = noteName(e.pitch, state.root, state.scale) + oct;
     return `<tr><td>${e.slot+1}</td><td>${e.t.toFixed(3)}</td><td class="pc">${nm}</td><td>${e.pitch}</td><td>${e.dur.toFixed(3)}</td><td>${e.vel}</td></tr>`;
   });
   tb.innerHTML = rows.join("");
