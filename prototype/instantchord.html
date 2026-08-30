@@ -10,83 +10,37 @@
    harmônica (tônica / subdominante / dominante), não decoração.
    ───────────────────────────────────────────────────────────── */
 
+/* Tema único, sem alternador: os cinzas do Live e as cores da paleta de
+   clip. O matiz codifica como o acorde soa — repouso, movimento, tensão. */
 :root{
-  --bg:        #E6EAE8;
-  --panel:     #F2F5F3;
-  --raised:    #FBFCFB;
-  --sunk:      #DCE1DE;
-  --line:      #C6CECB;
-  --line-soft: #DBE1DE;
-  --text:      #151F1D;
-  --dim:       #56635F;
-  --faint:     #85938F;
+  --bg:        #1B1B1B;
+  --panel:     #2E2E2E;
+  --raised:    #3B3B3B;
+  --sunk:      #151515;
+  --line:      #4A4A4A;
+  --line-soft: #292929;
+  --text:      #D2D2D2;
+  --dim:       #969696;
+  --faint:     #6E6E6E;
 
-  --tonic:     #A96A0B;
-  --sub:       #0E6E64;
-  --dom:       #B94329;
-  --tonic-bg:  #F6E7CD;
-  --sub-bg:    #D6EBE7;
-  --dom-bg:    #F6DDD5;
+  --tonic:     #F0A63C;
+  --sub:       #5FC2A6;
+  --dom:       #EC5FA6;
+  --tonic-bg:  #3A2C13;
+  --sub-bg:    #14332C;
+  --dom-bg:    #38182A;
 
-  --accent:    #A96A0B;
-  --glow:      rgba(169,106,11,.20);
-  --shadow:    rgba(21,31,29,.14);
+  --accent:    #F0A63C;
+  --glow:      rgba(240,166,60,.22);
+  --shadow:    rgba(0,0,0,.55);
 
-  --r-lg: 14px;
-  --r-md: 9px;
-  --r-sm: 5px;
+  --r-lg: 12px;
+  --r-md: 7px;
+  --r-sm: 4px;
 
   --f-disp: "Bricolage Grotesque", "Archivo", system-ui, sans-serif;
   --f-ui:   "Archivo", system-ui, -apple-system, sans-serif;
   --f-mono: "Azeret Mono", ui-monospace, "SF Mono", Menlo, monospace;
-}
-
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:        #0D1214;
-    --panel:     #141B1D;
-    --raised:    #1C2528;
-    --sunk:      #0A0F11;
-    --line:      #2B3538;
-    --line-soft: #202A2C;
-    --text:      #DFE7E4;
-    --dim:       #93A29E;
-    --faint:     #66756F;
-
-    --tonic:     #F0AE4C;
-    --sub:       #45C2B2;
-    --dom:       #F07A5F;
-    --tonic-bg:  #3A2C13;
-    --sub-bg:    #10352F;
-    --dom-bg:    #3B211A;
-
-    --accent:    #F0AE4C;
-    --glow:      rgba(240,174,76,.24);
-    --shadow:    rgba(0,0,0,.45);
-  }
-}
-
-:root[data-theme="dark"]{
-  --bg:        #0D1214;
-  --panel:     #141B1D;
-  --raised:    #1C2528;
-  --sunk:      #0A0F11;
-  --line:      #2B3538;
-  --line-soft: #202A2C;
-  --text:      #DFE7E4;
-  --dim:       #93A29E;
-  --faint:     #66756F;
-
-  --tonic:     #F0AE4C;
-  --sub:       #45C2B2;
-  --dom:       #F07A5F;
-  --tonic-bg:  #3A2C13;
-  --sub-bg:    #10352F;
-  --dom-bg:    #3B211A;
-
-  --accent:    #F0AE4C;
-  --glow:      rgba(240,174,76,.24);
-  --shadow:    rgba(0,0,0,.45);
 }
 
 *{ box-sizing:border-box; }
@@ -157,7 +111,7 @@ body{
 }
 
 .rack{
-  padding:16px 18px;
+  padding:13px 18px;
   border-bottom:1px solid var(--line-soft);
   display:flex;
   flex-wrap:wrap;
@@ -216,9 +170,10 @@ select:hover, .btn:hover{ border-color:var(--accent); }
 
 .spacer{ flex:1 1 auto; }
 
-.chartrack{ flex-direction:column; align-items:stretch; gap:10px; }
-.chartrow{ display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; }
-.field.grow{ flex:1 1 260px; }
+.chartrack{ flex-direction:column; align-items:stretch; gap:8px; }
+/* Grid em vez de flex: com flex-wrap o campo largo abria uma linha vazia. */
+.chartrow{ display:grid; grid-template-columns:1fr auto auto; gap:14px; align-items:end; }
+@media (max-width:720px){ .chartrow{ grid-template-columns:1fr; } }
 #chart{
   width:100%;
   font-family:var(--f-mono); font-size:15px; font-weight:500; letter-spacing:.03em;
@@ -247,7 +202,7 @@ select:hover, .btn:hover{ border-color:var(--accent); }
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:8px;
-  padding:18px;
+  padding:14px;
   background:var(--sunk);
   border-bottom:1px solid var(--line-soft);
 }
@@ -285,17 +240,17 @@ select:hover, .btn:hover{ border-color:var(--accent); }
 .pad:active{ cursor:grabbing; }
 
 .pad-head{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
-.pad-rn{
+.pad-sym{
   font-family:var(--f-disp);
   font-weight:700; font-stretch:82%;
   font-size:26px; line-height:1;
-  letter-spacing:-.01em;
+  letter-spacing:-.015em;
   color:var(--fn);
 }
-.pad-sym{
+.pad-rn{
   font-family:var(--f-mono);
-  font-size:12px; font-weight:500;
-  color:var(--dim);
+  font-size:10.5px; font-weight:500;
+  color:var(--faint);
   white-space:nowrap;
 }
 .pad-meta{
@@ -328,7 +283,7 @@ select:hover, .btn:hover{ border-color:var(--accent); }
   display:grid;
   grid-template-columns:minmax(260px,1fr) minmax(340px,1.05fr);
   gap:26px;
-  padding:18px;
+  padding:16px 18px;
   border-bottom:1px solid var(--line-soft);
 }
 
@@ -342,15 +297,24 @@ select:hover, .btn:hover{ border-color:var(--accent); }
 
 .degrees{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
 .degrees button{
-  font-family:var(--f-disp); font-weight:700; font-stretch:85%;
-  font-size:14px; padding:9px 2px;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  padding:7px 2px 5px;
   border-radius:var(--r-sm);
   background:var(--raised); border:1px solid var(--line);
   color:var(--dg); cursor:pointer;
   transition:background .13s, border-color .13s;
 }
+.degrees b{
+  font-family:var(--f-ui); font-weight:600; font-size:12.5px;
+  letter-spacing:-.01em; line-height:1.2;
+}
+.degrees i{
+  font-family:var(--f-mono); font-style:normal;
+  font-size:8.5px; letter-spacing:.06em; opacity:.62;
+}
 .degrees button:hover{ background:var(--sunk); }
-.degrees button[aria-pressed="true"]{ background:var(--dg); border-color:var(--dg); color:var(--panel); }
+.degrees button[aria-pressed="true"]{ background:var(--dg); border-color:var(--dg); color:var(--sunk); }
+.degrees button[aria-pressed="true"] i{ opacity:.75; }
 
 .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; }
 
@@ -402,7 +366,7 @@ input[type=range]::-moz-range-thumb{
 
 /* ── Piano roll ───────────────────────────────────────────── */
 
-.rollbox{ padding:16px 18px 18px; display:flex; flex-direction:column; gap:12px; }
+.rollbox{ padding:14px 18px 16px; display:flex; flex-direction:column; gap:12px; }
 .rollhead{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .rollhead .silk{ margin-right:auto; }
 .roll{
@@ -466,6 +430,7 @@ td.pc{ color:var(--text); }
   letter-spacing:.1em; text-transform:uppercase; color:var(--accent);
 }
 .card dd{ margin:0 0 4px; font-size:13px; color:var(--dim); }
+.card dd code{ font-family:var(--f-mono); font-size:11px; color:var(--accent); }
 .card ol{ margin:0; padding-left:1.15em; font-size:13.5px; color:var(--dim); display:flex; flex-direction:column; gap:6px; }
 .card ol::marker{ color:var(--faint); }
 
@@ -490,7 +455,7 @@ footer{
       <span class="tagline">Protótipo de interface · v0.1</span>
       <h1 class="wordmark">Instant<em>Chord</em></h1>
     </div>
-    <p>Gerador de progressões para Max for Live. Clique nos pads para ouvir, arraste para reharmonizar, gire os três macros para transformar bloco em dedilhado.</p>
+    <p>Gerador de progressões para o Ableton Live. Digite os acordes ou clique nos pads para ouvir. Ele começa reto — os três botões abrem o resto.</p>
   </header>
 
   <section class="console" aria-label="Console do InstantChord">
@@ -515,17 +480,6 @@ footer{
         <label for="preset">Progressão</label>
         <select id="preset"></select>
       </div>
-      <div class="spacer"></div>
-      <div class="field">
-        <label for="bpm">BPM</label>
-        <select id="bpm"></select>
-      </div>
-      <div class="field">
-        <label for="theme">Tema</label>
-        <div class="seg" id="theme" role="group" aria-label="Tema">
-          <button data-v="auto">Auto</button><button data-v="light">Claro</button><button data-v="dark">Escuro</button>
-        </div>
-      </div>
     </div>
 
     <!-- cifras -->
@@ -542,10 +496,9 @@ footer{
         </div>
         <button class="btn primary" id="chart-apply" type="button">Aplicar</button>
       </div>
-      <p class="hint">Separe por espaço; <code>|</code> marca compasso e dois acordes dentro dele dividem o compasso.
-        Aceita <code>m7</code> <code>maj9</code> <code>dim7</code> <code>sus4</code> <code>add9</code>
-        <code>13</code> <code>m7b5</code> <code>7#9</code> e baixo invertido <code>Am/C</code>.
-        O campo também escreve: mexa nos pads e ele acompanha — e trocar a tônica transpõe o que você digitou.</p>
+      <p class="hint">Um acorde por compasso, separados por espaço — <code>Fm Eb Db Ab</code>.
+        Entende <code>m7</code>, <code>maj9</code>, <code>sus4</code>, <code>add9</code>, <code>13</code>, <code>Am/C</code>.
+        Trocar a tônica transpõe tudo.</p>
     </div>
 
     <!-- pads -->
@@ -555,18 +508,18 @@ footer{
     <div class="bench">
 
       <div class="inspector">
-        <div class="insp-title">Slot <span id="insp-slot">1</span> <span id="insp-name"></span></div>
+        <div class="insp-title">Compasso <span id="insp-slot">1</span> <span id="insp-name"></span></div>
 
         <div class="field">
-          <label>Grau na escala</label>
+          <label>Acordes do tom</label>
           <div class="degrees" id="degrees" role="group" aria-label="Grau na escala"></div>
         </div>
 
         <div class="row">
           <div class="field">
-            <label for="ext">Extensão</label>
+            <label for="ext">Acorde</label>
             <div class="seg" id="ext" role="group" aria-label="Extensão">
-              <button data-v="5">tríade</button><button data-v="7">7</button><button data-v="9">9</button><button data-v="11">11</button><button data-v="13">13</button>
+              <button data-v="5">simples</button><button data-v="7">7</button><button data-v="9">9</button><button data-v="11">11</button><button data-v="13">13</button>
             </div>
           </div>
           <div class="field">
@@ -579,14 +532,14 @@ footer{
 
         <div class="row">
           <div class="field">
-            <label for="len">Duração</label>
-            <div class="seg" id="len" role="group" aria-label="Duração do slot">
+            <label for="len">Dura</label>
+            <div class="seg" id="len" role="group" aria-label="Duração do compasso">
               <button data-v="2">½</button><button data-v="4">1</button><button data-v="8">2</button>
             </div>
           </div>
           <div class="field">
-            <label for="on">Slot</label>
-            <div class="seg" id="on" role="group" aria-label="Slot ativo">
+            <label for="on">Compasso</label>
+            <div class="seg" id="on" role="group" aria-label="Compasso ativo">
               <button data-v="1">ativo</button><button data-v="0">mudo</button>
             </div>
           </div>
@@ -617,9 +570,9 @@ footer{
             </div>
           </div>
           <div class="field">
-            <label>Vozes</label>
-            <div class="seg" role="group" aria-label="Opções de voz">
-              <button id="vl" class="ghost">condução</button><button id="bassbtn" class="ghost">baixo</button>
+            <label>Ajustes</label>
+            <div class="seg" role="group" aria-label="Ajustes">
+              <button id="vl" class="ghost">suavizar</button><button id="bassbtn" class="ghost">baixo</button>
             </div>
           </div>
         </div>
@@ -638,9 +591,9 @@ footer{
       </div>
       <div class="roll"><canvas id="roll"></canvas></div>
       <div class="legend">
-        <span><i style="background:var(--tonic)"></i>Tônica</span>
-        <span><i style="background:var(--sub)"></i>Predominante</span>
-        <span><i style="background:var(--dom)"></i>Dominante</span>
+        <span><i style="background:var(--tonic)"></i>Repouso</span>
+        <span><i style="background:var(--sub)"></i>Movimento</span>
+        <span><i style="background:var(--dom)"></i>Tensão</span>
         <span id="engine-read"></span>
       </div>
     </div>
@@ -660,29 +613,29 @@ footer{
     <div class="card">
       <h2>Como manipular</h2>
       <dl>
+        <dt>Digite os acordes</dt>
+        <dd>Um por compasso, separados por espaço: <code>Fm Eb Db Ab</code>. Ele descobre o tom sozinho.</dd>
         <dt>Clique no pad</dt>
-        <dd>Ouve o acorde e seleciona o slot.</dd>
+        <dd>Ouve o acorde e escolhe qual você vai mexer.</dd>
         <dt>Arraste ↑↓ no pad</dt>
-        <dd>Percorre as inversões, mantendo a mesma harmonia.</dd>
+        <dd>Vira o acorde de cabeça para baixo. Mesmas notas, altura diferente.</dd>
         <dt>Shift + arraste</dt>
-        <dd>Abre e fecha extensões: tríade → 7 → 9 → 11 → 13.</dd>
-        <dt>Alt + clique</dt>
-        <dd>Troca o grau pelo vizinho diatônico — variação rápida.</dd>
+        <dd>Deixa o acorde mais colorido: simples → 7 → 9 → 11 → 13.</dd>
         <dt>Teclas 1–8</dt>
-        <dd>Dispara o slot correspondente. Barra de espaço toca tudo.</dd>
+        <dd>Dispara o compasso. Barra de espaço toca tudo.</dd>
       </dl>
     </div>
 
     <div class="card">
-      <h2>Os três macros</h2>
-      <p>Vinte parâmetros escondidos atrás de três botões. É o que separa isto de um gerador de acordes bloco.</p>
+      <h2>Os três botões</h2>
+      <p>Ele já vem reto: um acorde por compasso, tudo junto, do jeito mais simples. Estes três abrem o resto sem você precisar saber o nome de nada.</p>
       <dl>
-        <dt>Motion</dt>
-        <dd>Bloco → dedilhado (com curva de aceleração real, como a mão no violão) → arpejo em 1/8 e 1/16.</dd>
-        <dt>Spread</dt>
-        <dd>Fechado → drop 2 → drop 2+4 → aberto em três oitavas.</dd>
-        <dt>Density</dt>
-        <dd>Quantas vozes sobrevivem e quantos ataques por compasso, do acorde inteiro à levada sincopada.</dd>
+        <dt>Toque</dt>
+        <dd>Como o acorde é tocado. Tudo de uma vez, dedilhado como a mão no violão, ou nota por nota.</dd>
+        <dt>Abertura</dt>
+        <dd>As notas juntinhas ou espalhadas por três oitavas. Fechado soa cheio, aberto soa grande.</dd>
+        <dt>Ritmo</dt>
+        <dd>Um acorde por compasso, ou uma levada picada. Também tira e põe notas do acorde.</dd>
       </dl>
     </div>
 
@@ -726,7 +679,7 @@ function useFlats(root, scale){
 
 const SCALES = {
   major:         { label:"Maior",           steps:[0,2,4,5,7,9,11] },
-  minor:         { label:"Menor natural",   steps:[0,2,3,5,7,8,10] },
+  minor:         { label:"Menor",           steps:[0,2,3,5,7,8,10] },
   dorian:        { label:"Dórico",          steps:[0,2,3,5,7,9,10] },
   mixolydian:    { label:"Mixolídio",       steps:[0,2,4,5,7,9,10] },
   harmonicMinor: { label:"Menor harmônico", steps:[0,2,3,5,7,8,11] },
@@ -972,8 +925,8 @@ function writeChordSymbol(c, keyRoot, keyScale){
   return out;
 }
 
-/* Uma linha de cifras vira slots. Sem "|", cada acorde ocupa um compasso.
-   Com "|", os acordes dentro de um compasso dividem ele. */
+/* Uma linha de cifras vira slots: um acorde por compasso. A duração de cada
+   um se ajusta depois, no inspetor. */
 function parseProgression(text){
   const slots = [], bad = [];
   const take = (tok, len) => {
@@ -981,16 +934,7 @@ function parseProgression(text){
     if (c) slots.push({ ...c, inv:0, ext:5, sus:0, len, on:true });
     else bad.push(tok);
   };
-  if (text.includes("|")){
-    text.split("|").forEach(bar => {
-      const toks = bar.trim().split(/[\s,]+/).filter(Boolean);
-      if (!toks.length) return;
-      const base = Math.floor(16 / toks.length), extra = 16 % toks.length;
-      toks.forEach((t, i) => take(t, (base + (i < extra ? 1 : 0)) / 4));
-    });
-  } else {
-    text.trim().split(/[\s,]+/).filter(Boolean).forEach(t => take(t, 4));
-  }
+  text.trim().split(/[\s,|]+/).filter(Boolean).forEach(t => take(t, 4));
   return { slots, bad };
 }
 
@@ -1086,7 +1030,7 @@ function lead(pitches, prev){
   return best || pitches.slice();
 }
 
-const SPREAD_LABELS = ["Fechado","Drop 2","Drop 2+4","Aberto"];
+const SPREAD_LABELS = ["Fechado","Aberto","Bem aberto","Espalhado"];
 function spreadStage(s){ return s < .25 ? 0 : s < .5 ? 1 : s < .78 ? 2 : 3; }
 
 function applySpread(v, s){
@@ -1137,10 +1081,10 @@ const PATTERNS = [
   [1,0,1,0, 0,0,1,0, 1,0,1,0, 0,0,1,0],
   [1,0,1,0, 1,0,1,1, 1,0,1,0, 1,0,1,1],
 ];
-const PATTERN_LABELS = ["Semibreve","Mínimas","Sincopado","Colcheias","Denso"];
+const PATTERN_LABELS = ["Um por compasso","Dois por compasso","Sincopado","Ritmado","Cheio"];
 function patternIndex(d){ return d < .18 ? 0 : d < .40 ? 1 : d < .62 ? 2 : d < .84 ? 3 : 4; }
 
-const MOTION_LABELS = ["Bloco","Dedilhado","Arpejo 1/8","Arpejo 1/16"];
+const MOTION_LABELS = ["Bloco","Dedilhado","Arpejo","Arpejo rápido"];
 function motionStage(m){ return m < .12 ? 0 : m < .62 ? 1 : m < .84 ? 2 : 3; }
 /* Defasagem total do dedilhado, em *tempos* — não em ms — para que o
    gesto continue soando igual quando você muda o BPM. 0 = bloco,
@@ -1273,8 +1217,8 @@ const PRESETS = {
 const state = {
   root: 5, scale: "minor", bpm: 92, count: 4,
   slots: Array.from({length:8}, (_,i) => ({ mode:"deg", deg:[1,7,6,3,1,7,6,3][i], ext:5, sus:0, inv:0, len:4, on:true })),
-  motion: .40, spread: .30, density: .48,
-  gate: .62, hum: .28, dir: "up",
+  motion: 0, spread: 0, density: .08,
+  gate: .70, hum: .12, dir: "up",
   voiceLead: true, bass: true,
   seed: 20260830, sel: 0,
 };
@@ -1562,7 +1506,7 @@ function buildPads(){
     const b = document.createElement("button");
     b.className = "pad"; b.dataset.i = i; b.type = "button";
     b.innerHTML = `<span class="pad-idx"></span>
-      <span class="pad-head"><span class="pad-rn"></span><span class="pad-sym"></span></span>
+      <span class="pad-head"><span class="pad-sym"></span><span class="pad-rn"></span></span>
       <span class="pad-meta"></span>
       <canvas></canvas>
       <span class="hud"></span>`;
@@ -1584,9 +1528,9 @@ function paintPads(){
     b.querySelector(".pad-sym").textContent = symbol(ch, state);
     const meta = [];
     meta.push(ch.voices.length + " vozes");
-    if (!ch.diatonic) meta.push("empréstimo");
+    if (!ch.diatonic) meta.push("fora do tom");
     if (slot.inv) meta.push("inv " + slot.inv);
-    if (slot.len !== 4) meta.push(slot.len === 2 ? "½ comp" : "2 comp");
+    if (slot.len !== 4) meta.push(slot.len < 4 ? "meio compasso" : "2 compassos");
     b.querySelector(".pad-meta").textContent = meta.join(" · ");
     drawPadPreview(b.querySelector("canvas"), i);
   });
@@ -1650,9 +1594,9 @@ function flash(i){
 
 /* Knobs */
 const KNOBS = [
-  { key:"motion",  name:"Motion",  read: v => MOTION_LABELS[motionStage(v)] + (motionStage(v)===1 ? "  " + Math.round(strumMs(v, state.bpm)) + " ms" : "") },
-  { key:"spread",  name:"Spread",  read: v => SPREAD_LABELS[spreadStage(v)] },
-  { key:"density", name:"Density", read: v => PATTERN_LABELS[patternIndex(v)] },
+  { key:"motion",  name:"Toque",    read: v => MOTION_LABELS[motionStage(v)] + (motionStage(v)===1 ? "  " + Math.round(strumMs(v, state.bpm)) + " ms" : "") },
+  { key:"spread",  name:"Abertura", read: v => SPREAD_LABELS[spreadStage(v)] },
+  { key:"density", name:"Ritmo",    read: v => PATTERN_LABELS[patternIndex(v)] },
 ];
 
 function buildKnobs(){
@@ -1763,12 +1707,6 @@ function buildControls(){
   });
   scSel.addEventListener("change", () => { state.scale = scSel.value; refresh(); });
 
-  const bpmSel = $("#bpm");
-  [70,76,84,92,100,110,120,128,140].forEach(b => {
-    const o = document.createElement("option"); o.value = b; o.textContent = b; bpmSel.appendChild(o);
-  });
-  bpmSel.addEventListener("change", () => { state.bpm = +bpmSel.value; refresh(); });
-
   const pSel = $("#preset");
   const none = document.createElement("option"); none.value = ""; none.textContent = "—"; pSel.appendChild(none);
   Object.entries(PRESETS).forEach(([k, v]) => {
@@ -1795,7 +1733,6 @@ function buildControls(){
 
   syncs.push(
     seg("count",  () => state.count, v => { state.count = +v; if (state.sel >= state.count) state.sel = 0; buildPads(); }),
-    seg("theme",  () => themeMode,   v => setTheme(v)),
     seg("dir",    () => state.dir,   v => state.dir = v),
     seg("ext",    () => state.slots[state.sel].ext, v => { toDegree(state.sel); state.slots[state.sel].ext = +v; }),
     seg("sus",    () => state.slots[state.sel].sus, v => { toDegree(state.sel); state.slots[state.sel].sus = +v; }),
@@ -1858,19 +1795,11 @@ function toDegree(i){
         : s.ivs.includes(5) && !s.ivs.includes(3) && !s.ivs.includes(4) ? 4 : 0;
 }
 
-/* Texto ← estado. Só usa "|" quando algum compasso tem mais de um acorde. */
+/* Texto ← estado. */
 function progressionText(){
-  const bars = [];
-  let cur = [], acc = 0;
-  state.slots.slice(0, state.count).forEach((s, i) => {
-    const ch = model.chords[i];
-    cur.push(ch ? symbol(ch, state) : "?");
-    acc += s.len;
-    if (acc >= 4 - 1e-6){ bars.push(cur); cur = []; acc = 0; }
-  });
-  if (cur.length) bars.push(cur);
-  const split = bars.some(b => b.length > 1);
-  return split ? bars.map(b => b.join(" ")).join(" | ") : bars.flat().join(" ");
+  return state.slots.slice(0, state.count)
+    .map((s, i) => model.chords[i] ? symbol(model.chords[i], state) : "?")
+    .join(" ");
 }
 
 /* Texto → estado. */
@@ -1911,7 +1840,9 @@ function syncInspector(){
     b.setAttribute("aria-pressed", String(d === s.deg));
     const tmp = { ...s, mode:"deg", deg: d };
     const c = buildChord(tmp, state);
-    b.textContent = c.roman;
+    b.innerHTML = "<b></b><i></i>";
+    b.querySelector("b").textContent = symbol(c, state);
+    b.querySelector("i").textContent = c.roman;
     b.style.setProperty("--dg", fnColor(c.fn));
   });
   syncs.forEach(f => f());
@@ -1922,13 +1853,12 @@ function syncInspector(){
   });
   $("#root").value = state.root;
   $("#scale").value = state.scale;
-  $("#bpm").value = state.bpm;
   $("#gate").value = state.gate;
   $("#hum").value = state.hum;
   $("#gate-o").textContent = Math.round((0.15 + Math.pow(state.gate,1.3)*1.35) * 100) + "%";
   $("#hum-o").textContent = Math.round(state.hum * 100) + "%";
   $("#engine-read").textContent =
-    `${model.events.length} notas · ${state.voiceLead ? "condução ligada" : "sem condução"} · seed ${state.seed}`;
+    `${model.events.length} notas · ${state.voiceLead ? "suavizado" : "sem suavizar"} · seed ${state.seed}`;
   $("#detected").textContent = noteName(state.root, state.root, state.scale) + " " + SCALES[state.scale].label.toLowerCase();
   const chart = $("#chart");
   if (document.activeElement !== chart) chart.value = progressionText();
@@ -1951,15 +1881,6 @@ function toast(msg){
   t.textContent = msg; t.dataset.on = "1";
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.dataset.on = "0", 2600);
-}
-
-/* Tema */
-let themeMode = "auto";
-function setTheme(v){
-  themeMode = v;
-  if (v === "auto") document.documentElement.removeAttribute("data-theme");
-  else document.documentElement.setAttribute("data-theme", v);
-  requestAnimationFrame(() => { paintPads(); drawRoll(playing ? -1 : -1); });
 }
 
 /* Ciclo */

@@ -35,15 +35,14 @@ Os dois convivem: cada slot tem um `mode`.
 
 ```
 Fm Eb Db Ab                 quatro compassos, um acorde cada
-Dm7 G7 | Cmaj7              "|" marca compasso
-Am | F G | C                dois acordes num compasso dividem ele
+Dm7 G7 Cmaj7 A7             idem
 Am/C                        baixo invertido
 ```
 
-Sem `|`, cada acorde ocupa um compasso. Com `|`, os acordes de um compasso
-dividem as 16 semicolcheias o mais uniformemente possível (3 acordes →
-6+5+5), então `slot.len` pode ser fracionário — mas `len × 4` é sempre
-inteiro, que é o que a grade rítmica exige.
+Um acorde por compasso, separados por espaço. Sem separador de compasso e
+sem sintaxe para decorar: a duração de cada acorde se ajusta depois, no
+inspetor (meio, um ou dois compassos). Vírgula e `|` são tolerados como
+espaço, mas não significam nada — quem digita não precisa saber disso.
 
 ### Cifras aceitas
 
@@ -139,7 +138,7 @@ soa digitada; com ela soa tocada.
 
 ## 6. Os três macros
 
-### Motion — articulação
+### Toque (`motion`) — articulação
 
 | Faixa | Comportamento |
 | --- | --- |
@@ -154,21 +153,23 @@ segue `(i / (n−1))^0.72`: acelera do grave para o agudo, como a mão de
 verdade num violão. As vozes soltam juntas (a duração encolhe conforme o
 atraso aumenta).
 
-### Spread — abertura
+### Abertura (`spread`)
 
-`Fechado` · `Drop 2` · `Drop 2+4` · `Aberto`. Ver pipeline de vozes acima.
+Quatro estágios — na interface aparecem como `Fechado`, `Aberto`,
+`Bem aberto` e `Espalhado`; por dentro são posição fechada, drop 2,
+drop 2+4 e abertura por oitavas alternadas. Ver pipeline de vozes acima.
 
-### Density — número de vozes e ataques
+### Ritmo (`density`) — número de vozes e ataques
 
 Máscaras de 16 semicolcheias por compasso:
 
-| Faixa | Nome | Máscara |
+| Faixa | Nome na interface | Máscara |
 | --- | --- | --- |
-| < 0.18 | Semibreve | `1··· ···· ···· ····` |
-| < 0.40 | Mínimas | `1··· ···· 1··· ····` |
+| < 0.18 | Um por compasso | `1··· ···· ···· ····` |
+| < 0.40 | Dois por compasso | `1··· ···· 1··· ····` |
 | < 0.62 | Sincopado | `1··· ··1· ···· 1···` |
-| < 0.84 | Colcheias | `1·1· ··1· 1·1· ··1·` |
-| ≥ 0.84 | Denso | `1·1· 1·11 1·1· 1·11` |
+| < 0.84 | Ritmado | `1·1· ··1· 1·1· ··1·` |
+| ≥ 0.84 | Cheio | `1·1· 1·11 1·1· 1·11` |
 
 Em modo arpejo a máscara é ignorada — a grade vira 1/8 ou 1/16 corridas.
 
@@ -211,3 +212,36 @@ O botão **Lista de notas** no protótipo mostra exatamente esse array.
 
 `mulberry32` semeado pelo `seed` do estado. Nada de `Math.random()` — a
 mesma progressão com o mesmo seed tem que dar o mesmo MIDI, sempre.
+
+## 11. Linguagem e estado inicial
+
+O device é para quem produz, não para quem estudou harmonia. Duas decisões
+que valem para toda a interface:
+
+**O nome do acorde vem primeiro.** No pad, `Fm` em corpo grande e `i` em
+corpo miúdo ao lado. Nos botões de acorde do tom, o nome em cima e o
+algarismo romano embaixo, discreto. Quem sabe ler cifra funciona sem
+aprender nada; quem não sabe vai aprendendo de graça.
+
+**Sem jargão na superfície.** A tabela abaixo é o vocabulário: à esquerda o
+que aparece na tela, à direita o que é por dentro.
+
+| Na tela | Por dentro |
+| --- | --- |
+| Toque · Abertura · Ritmo | motion · spread · density |
+| Fechado / Aberto / Bem aberto / Espalhado | close / drop 2 / drop 2+4 / open |
+| Um por compasso / Dois / Sincopado / Ritmado / Cheio | máscaras rítmicas |
+| Repouso · Movimento · Tensão | tônica · predominante · dominante |
+| fora do tom | acorde emprestado, não diatônico |
+| suavizar | condução de vozes |
+| simples · 7 · 9 · 11 · 13 | tríade e extensões |
+| Compasso | slot |
+
+**Começa reto.** O estado inicial é `motion 0`, `spread 0`, `density 0.08`:
+um acorde bloco por compasso, posição fechada. É a saída que o usuário já
+conhece de outros geradores. As possibilidades ficam a um giro de botão —
+mas nenhuma delas está ligada quando o device abre.
+
+**Tema único.** Os cinzas do Live e as cores da paleta de clip, sem
+alternador claro/escuro. O device mora dentro do Ableton; não faz sentido
+ter um tema que discorde do host.

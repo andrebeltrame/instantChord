@@ -12,9 +12,13 @@ interface com espaço para trabalhar.
 Duas maneiras de montar a progressão, e elas conversam:
 
 - **Por grau** — clica nos pads I–VII dentro da tonalidade. Para compor.
-- **Por cifra** — digita `Fm Eb Db Ab` ou `Dm7 G7 | Cmaj7`. Para pegar uma
-  progressão de outra música. O device descobre o tom, e trocar a tônica
-  transpõe tudo.
+- **Por cifra** — digita `Fm Eb Db Ab`, um acorde por compasso. Para pegar
+  uma progressão de outra música. O device descobre o tom, e trocar a
+  tônica transpõe tudo.
+
+Ele abre reto — um acorde bloco por compasso — e três botões (Toque,
+Abertura, Ritmo) abrem o resto. A teoria fica de apoio: o nome do acorde é
+o que aparece grande, o algarismo romano fica miúdo do lado.
 
 ## Protótipo
 
