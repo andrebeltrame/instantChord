@@ -90,6 +90,13 @@ grau são remapeados (`i → vi` indo para maior, `I → iii` voltando), e os
 slots por cifra nem precisam ser tocados, já que suas alturas são
 absolutas.
 
+**A escolha fica valendo.** Clicar no ⇄ grava `preferRel`, e toda detecção
+seguinte é levada para aquele lado quando cai numa relativa. Quem usa um
+programa de reconhecimento que reporta a relativa maior clica uma vez e o
+InstantChord passa a concordar com ele em todas as progressões. Não é uma
+preferência que precise de tela de configuração: o gesto de discordar da
+detecção *é* o gesto de configurá-la.
+
 Isso é diferente do seletor de tônica, que **transpõe**. Se o usuário
 quisesse ler a mesma progressão em lá♭ e trocasse a tônica para Ab, ele
 moveria a música três semitons — não é o que ele quer. Daí o botão

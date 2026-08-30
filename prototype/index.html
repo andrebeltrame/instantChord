@@ -505,7 +505,7 @@ footer{
           <div class="keyrow">
             <span class="readout" id="detected">—</span>
             <button class="btn" id="relative" type="button"
-                    title="Mesmas notas, outro centro. Não transpõe nada."></button>
+                    title="Mesmas notas, outro centro. Não transpõe nada, e a escolha fica valendo."></button>
           </div>
         </div>
         <button class="btn primary" id="chart-apply" type="button">Aplicar</button>
@@ -1235,6 +1235,7 @@ const state = {
   motion: 0, spread: 0, density: .08,
   gate: .70, hum: .12, dir: "up",
   voiceLead: true, bass: true,
+  preferRel: null,        // "major" ou "minor": a relativa que o usuário escolheu
   seed: 20260830, sel: 0,
 };
 
@@ -1812,6 +1813,7 @@ function relativeOf(root, scale){
 
 function flipRelative(){
   const rel = relativeOf(state.root, state.scale);
+  state.preferRel = rel.scale;        // a escolha fica valendo para as próximas
   const shift = state.scale === "minor" ? 5 : 2;     // i → vi, ou I → iii
   state.slots.forEach(sl => {
     if (sl.mode === "deg") sl.deg = ((sl.deg - 1 + shift) % 7) + 1;
@@ -1854,6 +1856,13 @@ function applyChart(){
   const over = slots.length > 8;
   const use = slots.slice(0, 8);
   const key = detectKey(use);
+  // Entre relativas não existe resposta certa, então vale a preferência que
+  // o usuário já demonstrou clicando no ⇄ — inclusive para acompanhar o que
+  // outros programas de reconhecimento de acorde reportam.
+  if (state.preferRel && key.scale !== state.preferRel){
+    const r = relativeOf(key.root, key.scale);
+    key.root = r.root; key.scale = r.scale;
+  }
   state.root = key.root; state.scale = key.scale;
   state.count = use.length;
   state.sel = 0;
